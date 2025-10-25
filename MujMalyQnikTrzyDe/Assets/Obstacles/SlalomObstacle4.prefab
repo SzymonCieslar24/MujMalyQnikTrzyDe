@@ -9,9 +9,10 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3908922192478387953}
+  - component: {fileID: 8047547126633550442}
   m_Layer: 0
   m_Name: SlalomObstacle4
-  m_TagString: Untagged
+  m_TagString: Obstacle
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -37,6 +38,20 @@ Transform:
   - {fileID: 4359537960456466762}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &8047547126633550442
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3238629614097544264}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bd3e4214e14c1a640a6d5ba95dc1a9f3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SlalomObstacle
+  playerTag: Player
+  gates: []
 --- !u!1001 &834599473430131212
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -96,6 +111,12 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: e019a327afd8a364a8cae984935ca573, type: 3}
       insertIndex: -1
       addedObject: {fileID: 8646209283617214334}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: e019a327afd8a364a8cae984935ca573, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2309890763922261276}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: e019a327afd8a364a8cae984935ca573, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 7522807450186369308}
   m_SourcePrefab: {fileID: 100100000, guid: e019a327afd8a364a8cae984935ca573, type: 3}
 --- !u!1 &528185721266818909 stripped
 GameObject:
@@ -125,6 +146,41 @@ CapsuleCollider:
   m_Height: 3.2654126
   m_Direction: 1
   m_Center: {x: 0, y: 1.1327063, z: 0}
+--- !u!65 &2309890763922261276
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 528185721266818909}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 2.1828613, y: 1.6252038, z: 0.37420654}
+  m_Center: {x: 1.2846069, y: 0.63309205, z: -0.017303467}
+--- !u!114 &7522807450186369308
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 528185721266818909}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 966666d316a295b46b3f51a8fc1ce984, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SlalomGate
+  Order: 2
+  Side: 1
 --- !u!4 &873608931878540775 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: e019a327afd8a364a8cae984935ca573, type: 3}
@@ -189,6 +245,12 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: e019a327afd8a364a8cae984935ca573, type: 3}
       insertIndex: -1
       addedObject: {fileID: 6807844118047040484}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: e019a327afd8a364a8cae984935ca573, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 8524707193993657284}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: e019a327afd8a364a8cae984935ca573, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 135613850173533178}
   m_SourcePrefab: {fileID: 100100000, guid: e019a327afd8a364a8cae984935ca573, type: 3}
 --- !u!4 &2421106518916451635 stripped
 Transform:
@@ -223,6 +285,41 @@ CapsuleCollider:
   m_Height: 3.6527565
   m_Direction: 1
   m_Center: {x: 0, y: 1.3263782, z: 0}
+--- !u!65 &8524707193993657284
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3085721254155884425}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 2.2078857, y: 1.7036319, z: 0.38500977}
+  m_Center: {x: 1.262146, y: 0.7847049, z: -0.023742676}
+--- !u!114 &135613850173533178
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3085721254155884425}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 966666d316a295b46b3f51a8fc1ce984, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SlalomGate
+  Order: 0
+  Side: 1
 --- !u!1001 &4254364325045327521
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -282,6 +379,12 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: e019a327afd8a364a8cae984935ca573, type: 3}
       insertIndex: -1
       addedObject: {fileID: 7689388968924492057}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: e019a327afd8a364a8cae984935ca573, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 8095598332723076259}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: e019a327afd8a364a8cae984935ca573, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2243636284078539371}
   m_SourcePrefab: {fileID: 100100000, guid: e019a327afd8a364a8cae984935ca573, type: 3}
 --- !u!1 &4020553390603299824 stripped
 GameObject:
@@ -311,6 +414,41 @@ CapsuleCollider:
   m_Height: 3.2138515
   m_Direction: 1
   m_Center: {x: 0, y: 1.1069257, z: 0}
+--- !u!65 &8095598332723076259
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4020553390603299824}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 3.1066284, y: 1.850247, z: 0.34881592}
+  m_Center: {x: -1.7447815, y: 0.6874518, z: 0.021026611}
+--- !u!114 &2243636284078539371
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4020553390603299824}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 966666d316a295b46b3f51a8fc1ce984, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SlalomGate
+  Order: 5
+  Side: 0
 --- !u!4 &4359537960456466762 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: e019a327afd8a364a8cae984935ca573, type: 3}
@@ -375,6 +513,12 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: e019a327afd8a364a8cae984935ca573, type: 3}
       insertIndex: -1
       addedObject: {fileID: 6161407928402849647}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: e019a327afd8a364a8cae984935ca573, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1009512004412733567}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: e019a327afd8a364a8cae984935ca573, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 3176776532736646728}
   m_SourcePrefab: {fileID: 100100000, guid: e019a327afd8a364a8cae984935ca573, type: 3}
 --- !u!1 &3637096492781164852 stripped
 GameObject:
@@ -404,6 +548,41 @@ CapsuleCollider:
   m_Height: 3.2180982
   m_Direction: 1
   m_Center: {x: 0, y: 1.1090491, z: 0}
+--- !u!65 &1009512004412733567
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3637096492781164852}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 2.2426758, y: 1.951208, z: 0.36340332}
+  m_Center: {x: 1.2373047, y: 0.89318067, z: 0.006225586}
+--- !u!114 &3176776532736646728
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3637096492781164852}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 966666d316a295b46b3f51a8fc1ce984, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SlalomGate
+  Order: 4
+  Side: 1
 --- !u!4 &4121461414398919566 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: e019a327afd8a364a8cae984935ca573, type: 3}
@@ -468,6 +647,12 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: e019a327afd8a364a8cae984935ca573, type: 3}
       insertIndex: -1
       addedObject: {fileID: 7127435435436516026}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: e019a327afd8a364a8cae984935ca573, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 4516259109453352282}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: e019a327afd8a364a8cae984935ca573, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 3106033531226369189}
   m_SourcePrefab: {fileID: 100100000, guid: e019a327afd8a364a8cae984935ca573, type: 3}
 --- !u!4 &7085207127380053722 stripped
 Transform:
@@ -502,6 +687,41 @@ CapsuleCollider:
   m_Height: 3.146998
   m_Direction: 1
   m_Center: {x: 0, y: 1.073499, z: 0}
+--- !u!65 &4516259109453352282
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7572916003680392288}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 2.6550293, y: 2.076007, z: 0.42999268}
+  m_Center: {x: -1.440979, y: 0.6806147, z: 0.002960205}
+--- !u!114 &3106033531226369189
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7572916003680392288}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 966666d316a295b46b3f51a8fc1ce984, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SlalomGate
+  Order: 3
+  Side: 0
 --- !u!1001 &8498551525034517275
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -561,6 +781,12 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: e019a327afd8a364a8cae984935ca573, type: 3}
       insertIndex: -1
       addedObject: {fileID: 5178121291539515567}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: e019a327afd8a364a8cae984935ca573, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1564927671148490044}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: e019a327afd8a364a8cae984935ca573, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 5907034320689157028}
   m_SourcePrefab: {fileID: 100100000, guid: e019a327afd8a364a8cae984935ca573, type: 3}
 --- !u!4 &8248996827319502064 stripped
 Transform:
@@ -595,3 +821,38 @@ CapsuleCollider:
   m_Height: 3.0703266
   m_Direction: 1
   m_Center: {x: 0, y: 1.0351633, z: 0}
+--- !u!65 &1564927671148490044
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8732904382477393482}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 2.5737915, y: 1.8993572, z: 0.39959717}
+  m_Center: {x: -1.3912048, y: 0.8793412, z: -0.0030212402}
+--- !u!114 &5907034320689157028
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8732904382477393482}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 966666d316a295b46b3f51a8fc1ce984, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SlalomGate
+  Order: 1
+  Side: 0
