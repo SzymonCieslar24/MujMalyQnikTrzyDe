@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 #if ENABLE_INPUT_SYSTEM
 using UnityEngine.InputSystem;
+using static Codice.Client.Common.EventTracking.TrackFeatureUseEvent.Features.DesktopGUI.Filters;
 #endif
 
 /* Note: animations are called via the controller for both the character and capsule using animator null checks
@@ -16,10 +17,10 @@ namespace StarterAssets
     {
         [Header("Player")]
         [Tooltip("Move speed of the character in m/s")]
-        public float MoveSpeed = 2.0f;
+        public float MoveSpeed = 4.0f;
 
         [Tooltip("Sprint speed of the character in m/s")]
-        public float SprintSpeed = 5.335f;
+        public float SprintSpeed = 6.0f;
 
         [Tooltip("How fast the character turns to face movement direction")]
         [Range(0.0f, 0.3f)]
@@ -122,6 +123,33 @@ namespace StarterAssets
             }
         }
 
+        // --- STAMINA: Ustawienia i stan ---
+        [Header("Stamina")]
+        [Tooltip("Maksymalna ilość staminy")]
+        public float MaxStamina = 100f;
+
+        [Tooltip("Zużycie staminy na sekundę podczas sprintu")]
+        public float SprintDrainPerSecond = 3f;
+
+        [Tooltip("Koszt jednorazowy skoku")]
+        public float JumpCost = 2f;
+
+        [Tooltip("Regeneracja staminy na sekundę podczas chodzenia (nie sprintu)")]
+        public float RegenWhileWalkingPerSecond = 5f;
+
+        [Tooltip("Regeneracja staminy na sekundę podczas stania (brak ruchu)")]
+        public float RegenWhileIdlePerSecond = 15f;
+
+        [Tooltip("Minimalna stamina wymagana, by zacząć/utrzymać sprint")]
+        public float MinStaminaToSprint = 5f;
+
+        [Tooltip("Minimalna stamina wymagana, by wykonać skok")]
+        public float MinStaminaToJump = 10f;
+
+        private float _stamina;          // aktualna stamina
+        private bool _isSprinting;       // czy faktycznie sprintujemy w tej klatce
+        private bool _isMoving;          // czy jest wejście ruchu (niezerowe)
+
 
         private void Awake()
         {
@@ -150,6 +178,7 @@ namespace StarterAssets
             // reset our timeouts on start
             _jumpTimeoutDelta = JumpTimeout;
             _fallTimeoutDelta = FallTimeout;
+            _stamina = MaxStamina;
         }
 
         private void Update()
@@ -159,6 +188,7 @@ namespace StarterAssets
             JumpAndGravity();
             GroundedCheck();
             Move();
+            UpdateStamina();
         }
 
         private void LateUpdate()
@@ -213,8 +243,11 @@ namespace StarterAssets
 
         private void Move()
         {
+            _isMoving = _input.move != Vector2.zero;
+            bool canSprint = _stamina >= MinStaminaToSprint && _isMoving;
+
             // set target speed based on move speed, sprint speed and if sprint is pressed
-            float targetSpeed = _input.sprint ? SprintSpeed : MoveSpeed;
+            float targetSpeed = (_input.sprint && canSprint) ? SprintSpeed : MoveSpeed;
 
             // a simplistic acceleration and deceleration designed to be easy to remove, replace, or iterate upon
 
@@ -277,6 +310,8 @@ namespace StarterAssets
                 _animator.SetFloat(_animIDSpeed, _animationBlend);
                 _animator.SetFloat(_animIDMotionSpeed, inputMagnitude);
             }
+
+            _isSprinting = (_input.sprint && canSprint && targetSpeed == SprintSpeed && _speed > 0.01f);
         }
 
         private void JumpAndGravity()
@@ -300,15 +335,26 @@ namespace StarterAssets
                 }
 
                 // Jump
+                // --- STAMINA: skok tylko gdy jest wystarczająca stamina ---
                 if (_input.jump && _jumpTimeoutDelta <= 0.0f)
                 {
-                    // the square root of H * -2 * G = how much velocity needed to reach desired height
-                    _verticalVelocity = Mathf.Sqrt(JumpHeight * -2f * Gravity);
-
-                    // update animator if using character
-                    if (_hasAnimator)
+                    if (_stamina >= MinStaminaToJump && _stamina >= JumpCost)
                     {
-                        _animator.SetBool(_animIDJump, true);
+                        _verticalVelocity = Mathf.Sqrt(JumpHeight * -2f * Gravity);
+                        Debug.Log("Skok");
+                        _stamina = Mathf.Max(0f, _stamina - JumpCost); // potrąć koszt skoku
+
+                        _jumpTimeoutDelta = JumpTimeout;   // <<< zresetuj cooldown NATYCHMIAST
+                        _input.jump = false;               // <<< skonsumuj wejście (trzymanie nie spamuje)
+
+                        if (_hasAnimator)
+                        {
+                            _animator.SetBool(_animIDJump, true);
+                        }
+                    }
+                    else
+                    {
+                        _input.jump = false;
                     }
                 }
 
@@ -346,6 +392,30 @@ namespace StarterAssets
             {
                 _verticalVelocity += Gravity * Time.deltaTime;
             }
+        }
+
+        // --- STAMINA: logika zużycia i regeneracji ---
+        private void UpdateStamina()
+        {
+            float delta = 0f;
+
+            if (_isSprinting)
+            {
+                // zużycie podczas sprintu
+                delta -= SprintDrainPerSecond * Time.deltaTime;
+            }
+            else
+            {
+                // regeneracja (szybko gdy stoisz, wolniej gdy idziesz)
+                if (_isMoving)
+                    delta += RegenWhileWalkingPerSecond * Time.deltaTime;
+                else
+                    delta += RegenWhileIdlePerSecond * Time.deltaTime;
+            }
+
+            _stamina = Mathf.Clamp(_stamina + delta, 0f, MaxStamina);
+
+            // jeśli stamina się wyczerpała, sprint wyłączy się „naturalnie” w Move() (canSprint == false)
         }
 
         private static float ClampAngle(float lfAngle, float lfMin, float lfMax)
@@ -388,5 +458,9 @@ namespace StarterAssets
                 AudioSource.PlayClipAtPoint(LandingAudioClip, transform.TransformPoint(_controller.center), FootstepAudioVolume);
             }
         }
+
+        public float GetStamina01() => MaxStamina <= 0.01f ? 0f : _stamina / MaxStamina;
+        public float GetStamina() => _stamina;
+        public void SetStamina(float value) => _stamina = Mathf.Clamp(value, 0f, MaxStamina);
     }
 }
