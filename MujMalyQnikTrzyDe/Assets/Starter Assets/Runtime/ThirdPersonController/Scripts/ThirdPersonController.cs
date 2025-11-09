@@ -35,7 +35,7 @@ namespace StarterAssets
 
         [Space(10)]
         [Tooltip("The height the player can jump")]
-        public float JumpHeight = 1.2f;
+        public float JumpHeight = 1.5f;
 
         [Tooltip("The character uses its own gravity value. The engine default is -9.81f")]
         public float Gravity = -15.0f;
@@ -75,6 +75,21 @@ namespace StarterAssets
 
         [Tooltip("For locking the camera position on all axis")]
         public bool LockCameraPosition = false;
+
+        [Header("Voice Nudge")]
+        public float PitchNudgeDuration = 0.2f;
+        [Tooltip("Koszt jednorazowy skoku")]
+        public float NudgeDistance = 2f;
+
+        [Tooltip("Koszt jednorazowy skoku")]
+        public float NudgeCost = 3f;
+
+        private float _nudgeRemaining = 0f;
+        private Vector3 _nudgeDir = Vector3.zero;
+
+        [Header("Punish (kara za głośny dźwięk)")]
+        public float PunishDuration = 5f;   // czas kary domyślnie
+        private float _punishTime = -1f;    // <0 = brak kary
 
         // cinemachine
         private float _cinemachineTargetYaw;
@@ -132,7 +147,7 @@ namespace StarterAssets
         public float SprintDrainPerSecond = 3f;
 
         [Tooltip("Koszt jednorazowy skoku")]
-        public float JumpCost = 2f;
+        public float JumpCost = 30f;
 
         [Tooltip("Regeneracja staminy na sekundę podczas chodzenia (nie sprintu)")]
         public float RegenWhileWalkingPerSecond = 5f;
@@ -150,6 +165,33 @@ namespace StarterAssets
         private bool _isSprinting;       // czy faktycznie sprintujemy w tej klatce
         private bool _isMoving;          // czy jest wejście ruchu (niezerowe)
 
+        // --- REARING: odchylenie konia przy głośnym dźwięku (bez korutyn) ---
+        [Header("Rearing (głośny dźwięk)")]
+        [Tooltip("Czas trwania wspięcia (sekundy)")]
+        public float RearDuration = 0.8f;
+
+        [Tooltip("Maksymalny kąt odchyłu do tyłu w stopniach (oś X, dodatnie wartości = do tyłu)")]
+        public float RearMaxAngle = 35f;
+
+        [Tooltip("Prędkość lekkiego cofania podczas wspięcia (m/s)")]
+        public float RearBackwardSpeed = 0.6f;
+
+        // stan rearing
+        private float _rearTime = -1f;        // <0 = brak rearing, inaczej czas trwania od startu
+        private float _currentRearTiltX = 0f; // aktualny kąt odchyłu (X)
+
+        [Header("Audio (reakcje konia)")]
+        [Tooltip("Dźwięk rżenia / wystraszenia konia podczas rearingu")]
+        public AudioClip ScaredAudioClip;
+
+        [Range(0, 1)]
+        public float ScaredAudioVolume = 1.0f;
+
+        [Tooltip("Dźwięk wyskoku")]
+        public AudioClip JumpAudioClip;
+
+        [Range(0, 1)]
+        public float JumpAudioVolume = 1.0f;
 
         private void Awake()
         {
@@ -163,7 +205,7 @@ namespace StarterAssets
         private void Start()
         {
             _cinemachineTargetYaw = CinemachineCameraTarget.transform.rotation.eulerAngles.y;
-            
+
             _hasAnimator = TryGetComponent(out _animator);
             _controller = GetComponent<CharacterController>();
             _input = GetComponent<StarterAssetsInputs>();
@@ -184,6 +226,14 @@ namespace StarterAssets
         private void Update()
         {
             _hasAnimator = TryGetComponent(out _animator);
+
+            // najpierw zaktualizuj stan wspięcia (określa tilt X i blokady)
+            UpdateRear();
+
+            if (_punishTime >= 0f)
+            {
+                _punishTime -= Time.deltaTime;
+            }
 
             JumpAndGravity();
             GroundedCheck();
@@ -241,111 +291,171 @@ namespace StarterAssets
                 _cinemachineTargetYaw, 0.0f);
         }
 
-        private void Move()
+        public void TriggerPunish(float duration)
         {
-            _isMoving = _input.move != Vector2.zero;
-            bool canSprint = _stamina >= MinStaminaToSprint && _isMoving;
+            _punishTime = duration;
+        }
 
-            // set target speed based on move speed, sprint speed and if sprint is pressed
-            float targetSpeed = (_input.sprint && canSprint) ? SprintSpeed : MoveSpeed;
+        public void TriggerPitchNudge(float distance)
+        {
+            if (_mainCamera == null) return;
 
-            // a simplistic acceleration and deceleration designed to be easy to remove, replace, or iterate upon
+            // Kierunek = forward kamery rzutowany na płaszczyznę XZ
+            Vector3 camForward = _mainCamera.transform.forward;
+            camForward.y = 0f;
+            if (camForward.sqrMagnitude < 0.0001f)
+                camForward = transform.forward; // awaryjnie
 
-            // note: Vector2's == operator uses approximation so is not floating point error prone, and is cheaper than magnitude
-            // if there is no input, set the target speed to 0
-            if (_input.move == Vector2.zero) targetSpeed = 0.0f;
+            _stamina = Mathf.Max(0f, _stamina - NudgeCost);
 
-            // a reference to the players current horizontal velocity
-            float currentHorizontalSpeed = new Vector3(_controller.velocity.x, 0.0f, _controller.velocity.z).magnitude;
+            _nudgeDir = camForward.normalized;
+            _nudgeRemaining = distance;
+        }
 
-            float speedOffset = 0.1f;
-            float inputMagnitude = _input.analogMovement ? _input.move.magnitude : 1f;
-
-            // accelerate or decelerate to target speed
-            if (currentHorizontalSpeed < targetSpeed - speedOffset ||
-                currentHorizontalSpeed > targetSpeed + speedOffset)
+        // --- PUBLICZNE: wyzwolenie wspięcia (rearing) ---
+        public void TriggerRear()
+        {
+            // jeśli już trwa, nie restartuj w kółko
+            if (_rearTime < 0f)
             {
-                // creates curved result rather than a linear one giving a more organic speed change
-                // note T in Lerp is clamped, so we don't need to clamp our speed
-                _speed = Mathf.Lerp(currentHorizontalSpeed, targetSpeed * inputMagnitude,
-                    Time.deltaTime * SpeedChangeRate);
+                _rearTime = 0f;
 
-                // round speed to 3 decimal places
-                _speed = Mathf.Round(_speed * 1000f) / 1000f;
+                if (ScaredAudioClip != null)
+                {
+                    AudioSource.PlayClipAtPoint(ScaredAudioClip, transform.position, ScaredAudioVolume);
+                }
             }
-            else
+        }
+
+        // --- AKTUALIZACJA STANU REARING ---
+        private void UpdateRear()
+        {
+            if (_rearTime < 0f)
             {
-                _speed = targetSpeed;
-            }
-
-            _animationBlend = Mathf.Lerp(_animationBlend, targetSpeed, Time.deltaTime * SpeedChangeRate);
-            if (_animationBlend < 0.01f) _animationBlend = 0f;
-
-            // normalise input direction
-            Vector3 inputDirection = new Vector3(_input.move.x, 0.0f, _input.move.y).normalized;
-
-            // note: Vector2's != operator uses approximation so is not floating point error prone, and is cheaper than magnitude
-            // if there is a move input rotate player when the player is moving
-            if (_input.move != Vector2.zero)
-            {
-                _targetRotation = Mathf.Atan2(inputDirection.x, inputDirection.z) * Mathf.Rad2Deg +
-                                  _mainCamera.transform.eulerAngles.y;
-                float rotation = Mathf.SmoothDampAngle(transform.eulerAngles.y, _targetRotation, ref _rotationVelocity,
-                    RotationSmoothTime);
-
-                // rotate to face input direction relative to camera position
-                transform.rotation = Quaternion.Euler(0.0f, rotation, 0.0f);
+                _currentRearTiltX = 0f;
+                return;
             }
 
+            _rearTime += Time.deltaTime;
+            float t = Mathf.Clamp01(_rearTime / Mathf.Max(0.0001f, RearDuration));
 
-            Vector3 targetDirection = Quaternion.Euler(0.0f, _targetRotation, 0.0f) * Vector3.forward;
+            // gładkie wejście/wyjście: sin(pi * t) -> 0..1..0
+            float envelope = Mathf.Sin(t * Mathf.PI);
 
-            // move the player
-            _controller.Move(targetDirection.normalized * (_speed * Time.deltaTime) +
-                             new Vector3(0.0f, _verticalVelocity, 0.0f) * Time.deltaTime);
+            // odchył do tyłu (oś X): dodatnie w górę/tył – jeśli chcesz odwrócić, zmień znak
+            _currentRearTiltX = -envelope * RearMaxAngle;
 
-            // update animator if using character
+            if (t >= 1f)
+            {
+                _rearTime = -1f;
+                _currentRearTiltX = 0f;
+            }
+        }
+
+        public void Move()
+        {
+            // Brak wejścia ruchu w tej wersji kontrolera
+            _isMoving = false;
+            _isSprinting = false;
+
+            // Zawsze ustawiamy rotację: patrz w stronę kamery + przechył X (rearing)
+            float cameraYaw = _mainCamera != null ? _mainCamera.transform.eulerAngles.y : transform.eulerAngles.y;
+            float rotationY = Mathf.SmoothDampAngle(transform.eulerAngles.y, cameraYaw, ref _rotationVelocity, RotationSmoothTime);
+            transform.rotation = Quaternion.Euler(_currentRearTiltX, rotationY, 0.0f);
+
+            // Zaczynamy tylko od składowej grawitacji
+            Vector3 move = new Vector3(0.0f, _verticalVelocity, 0.0f) * Time.deltaTime;
+
+            // --- KARA: pełna blokada ruchu poziomego, ale przechył jest widoczny ---
+            if (_punishTime >= 0f)
+            {
+                _speed = 0f;
+                _animationBlend = 0f;
+
+                // Bez cofania i bez nudge podczas kary
+                _controller.Move(move);
+
+                if (_hasAnimator)
+                {
+                    _animator.SetFloat(_animIDSpeed, 0f);
+                    _animator.SetFloat(_animIDMotionSpeed, 0f);
+                }
+                return;
+            }
+
+            // Poza karą: brak chodzenia/sprintu, ale płynnie wygaszamy blend
+            _speed = 0f;
+            _animationBlend = Mathf.Lerp(_animationBlend, 0f, Time.deltaTime * SpeedChangeRate);
+
+            // Cofanie podczas wspięcia (rearing) – delikatne, zależne od obwiedni
+            if (_rearTime >= 0f)
+            {
+                float t = Mathf.Clamp01(_rearTime / Mathf.Max(0.01f, RearDuration));
+                float envelope = Mathf.Sin(t * Mathf.PI);
+                move += -transform.forward * (RearBackwardSpeed * envelope * Time.deltaTime);
+            }
+
+            // Pchnięcie po wysokim tonie (nudge)
+            if (_nudgeRemaining > 0f && _nudgeDir.sqrMagnitude > 1e-6f)
+            {
+                float nudgeSpeed = NudgeDistance / Mathf.Max(0.01f, PitchNudgeDuration);
+                float step = Mathf.Min(_nudgeRemaining, nudgeSpeed * Time.deltaTime);
+                move += _nudgeDir * step;
+                _nudgeRemaining -= step;
+            }
+
+            _controller.Move(move);
+
+            // Animator
             if (_hasAnimator)
             {
                 _animator.SetFloat(_animIDSpeed, _animationBlend);
-                _animator.SetFloat(_animIDMotionSpeed, inputMagnitude);
+                _animator.SetFloat(_animIDMotionSpeed, 0f);
             }
-
-            _isSprinting = (_input.sprint && canSprint && targetSpeed == SprintSpeed && _speed > 0.01f);
         }
 
         private void JumpAndGravity()
         {
+            if (_punishTime >= 0f)
+            {
+                _input.jump = false;
+                return;
+            }
+
             if (Grounded)
             {
-                // reset the fall timeout timer
                 _fallTimeoutDelta = FallTimeout;
 
-                // update animator if using character
                 if (_hasAnimator)
                 {
                     _animator.SetBool(_animIDJump, false);
                     _animator.SetBool(_animIDFreeFall, false);
                 }
 
-                // stop our velocity dropping infinitely when grounded
                 if (_verticalVelocity < 0.0f)
                 {
                     _verticalVelocity = -2f;
                 }
 
-                // Jump
-                // --- STAMINA: skok tylko gdy jest wystarczająca stamina ---
-                if (_input.jump && _jumpTimeoutDelta <= 0.0f)
+                // W czasie rearing nie pozwalaj na skok
+                bool isRearing = _rearTime >= 0f;
+
+                if (_input.jump && _jumpTimeoutDelta <= 0.0f && !isRearing)
                 {
                     if (_stamina >= MinStaminaToJump && _stamina >= JumpCost)
                     {
                         _verticalVelocity = Mathf.Sqrt(JumpHeight * -2f * Gravity);
-                        Debug.Log("Skok");
-                        _stamina = Mathf.Max(0f, _stamina - JumpCost); // potrąć koszt skoku
 
-                        _jumpTimeoutDelta = JumpTimeout;   // <<< zresetuj cooldown NATYCHMIAST
-                        _input.jump = false;               // <<< skonsumuj wejście (trzymanie nie spamuje)
+                        if (JumpAudioClip != null)
+                        {
+                            AudioSource.PlayClipAtPoint(JumpAudioClip, transform.position, JumpAudioVolume);
+                        }
+
+                        _stamina = Mathf.Max(0f, _stamina - JumpCost);
+
+                        TriggerPitchNudge(5f);
+                        _jumpTimeoutDelta = JumpTimeout;
+                        _input.jump = false;
 
                         if (_hasAnimator)
                         {
@@ -358,7 +468,6 @@ namespace StarterAssets
                     }
                 }
 
-                // jump timeout
                 if (_jumpTimeoutDelta >= 0.0f)
                 {
                     _jumpTimeoutDelta -= Time.deltaTime;
@@ -366,28 +475,23 @@ namespace StarterAssets
             }
             else
             {
-                // reset the jump timeout timer
                 _jumpTimeoutDelta = JumpTimeout;
 
-                // fall timeout
                 if (_fallTimeoutDelta >= 0.0f)
                 {
                     _fallTimeoutDelta -= Time.deltaTime;
                 }
                 else
                 {
-                    // update animator if using character
                     if (_hasAnimator)
                     {
                         _animator.SetBool(_animIDFreeFall, true);
                     }
                 }
 
-                // if we are not grounded, do not jump
                 _input.jump = false;
             }
 
-            // apply gravity over time if under terminal (multiply by delta time twice to linearly speed up over time)
             if (_verticalVelocity < _terminalVelocity)
             {
                 _verticalVelocity += Gravity * Time.deltaTime;
@@ -401,12 +505,10 @@ namespace StarterAssets
 
             if (_isSprinting)
             {
-                // zużycie podczas sprintu
                 delta -= SprintDrainPerSecond * Time.deltaTime;
             }
             else
             {
-                // regeneracja (szybko gdy stoisz, wolniej gdy idziesz)
                 if (_isMoving)
                     delta += RegenWhileWalkingPerSecond * Time.deltaTime;
                 else
@@ -414,8 +516,6 @@ namespace StarterAssets
             }
 
             _stamina = Mathf.Clamp(_stamina + delta, 0f, MaxStamina);
-
-            // jeśli stamina się wyczerpała, sprint wyłączy się „naturalnie” w Move() (canSprint == false)
         }
 
         private static float ClampAngle(float lfAngle, float lfMin, float lfMax)
@@ -433,7 +533,6 @@ namespace StarterAssets
             if (Grounded) Gizmos.color = transparentGreen;
             else Gizmos.color = transparentRed;
 
-            // when selected, draw a gizmo in the position of, and matching radius of, the grounded collider
             Gizmos.DrawSphere(
                 new Vector3(transform.position.x, transform.position.y - GroundedOffset, transform.position.z),
                 GroundedRadius);
@@ -461,6 +560,7 @@ namespace StarterAssets
 
         public float GetStamina01() => MaxStamina <= 0.01f ? 0f : _stamina / MaxStamina;
         public float GetStamina() => _stamina;
+        public float GetDistance() => NudgeDistance;
         public void SetStamina(float value) => _stamina = Mathf.Clamp(value, 0f, MaxStamina);
     }
 }
