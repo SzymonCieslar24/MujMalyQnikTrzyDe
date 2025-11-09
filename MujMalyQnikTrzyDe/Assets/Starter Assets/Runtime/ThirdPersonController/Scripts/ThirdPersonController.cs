@@ -81,7 +81,6 @@ namespace StarterAssets
         [Tooltip("Koszt jednorazowy skoku")]
         public float NudgeDistance = 2f;
 
-        [Tooltip("Koszt jednorazowy skoku")]
         public float NudgeCost = 3f;
 
         private float _nudgeRemaining = 0f;
@@ -560,7 +559,10 @@ namespace StarterAssets
 
         public float GetStamina01() => MaxStamina <= 0.01f ? 0f : _stamina / MaxStamina;
         public float GetStamina() => _stamina;
+        public float GetMaxStamina() => MaxStamina;
         public float GetDistance() => NudgeDistance;
+        public float GetJumpHeight() => JumpHeight;
+        public float GetRegenSpeed() => RegenWhileWalkingPerSecond;
         public void SetStamina(float value) => _stamina = Mathf.Clamp(value, 0f, MaxStamina);
     }
 }
