@@ -38,7 +38,7 @@ public abstract class ObstacleBase : MonoBehaviour
             foreach (var b in _optionalBehaviours)
             {
                 if (b == this) continue;
-                if (b is Renderer) continue;
+                //if (b is Renderer) continue;
                 b.enabled = active;
             }
         }

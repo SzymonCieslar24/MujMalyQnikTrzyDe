@@ -17,6 +17,8 @@ public class TrackManager : MonoBehaviour
     private float runStartTime = 0f;
     private float lastRunTime = 0f;
 
+    private bool trackActivated = false;
+
     public float RunElapsed =>
         isRunning ? (Time.time - runStartTime) : lastRunTime;
 
@@ -28,18 +30,49 @@ public class TrackManager : MonoBehaviour
             return;
         }
         Instance = this;
+
+        ArmTrackForTrigger();
     }
 
-    private void Start()
+    public void ArmTrackForTrigger()
     {
+        trackActivated = false;
+        isRunning = false;
+        runStartTime = 0f;
+        lastRunTime = 0f;
+
+        if (obstacles != null)
+        {
+            for (int i = 0; i < obstacles.Count; i++)
+            {
+                if (obstacles[i] != null)
+                    obstacles[i].SetActiveState(false);
+            }
+        }
+    }
+
+    public void ActivateTrackAndStart(GameObject activator = null)
+    {
+        if (trackActivated) return;
+        trackActivated = true;
+
         ActivateOnlyCurrent();
-        if (obstacles.Count > 0 && !isRunning) StartRun();
+
+        if (obstacles.Count > 0 && !isRunning)
+            StartRun();
     }
 
     public void RegisterObstacle(ObstacleBase obstacle)
     {
         if (!obstacles.Contains(obstacle))
             obstacles.Add(obstacle);
+
+        if (!trackActivated)
+        {
+            if (obstacle != null)
+                obstacle.SetActiveState(false);
+            return;
+        }
 
         ActivateOnlyCurrent();
 
@@ -63,7 +96,7 @@ public class TrackManager : MonoBehaviour
     public void AddScore(int value)
     {
         score += value;
-        Debug.Log($"Wynik: {score}");
+        Debug.Log($"Punkty: {score}");
     }
 
     public void NotifyObstacleCompleted(bool success)
@@ -94,7 +127,9 @@ public class TrackManager : MonoBehaviour
 
     private void ActivateOnlyCurrent()
     {
-        if (obstacles == null) return;
+        if (obstacles == null || obstacles.Count == 0) return;
+
+        if (!trackActivated) return;
 
         for (int i = 0; i < obstacles.Count; i++)
         {
@@ -103,6 +138,13 @@ public class TrackManager : MonoBehaviour
                 obstacles[i].SetActiveState(shouldBeActive);
         }
     }
+
+    public void ClearObstaclesList()
+    {
+        obstacles?.Clear();
+        currentIndex = 0;
+    }
+
 
     public void StartRun()
     {
@@ -128,6 +170,6 @@ public class TrackManager : MonoBehaviour
         runStartTime = 0f;
         lastRunTime = 0f;
 
-        ActivateOnlyCurrent();
+        ArmTrackForTrigger();
     }
 }
