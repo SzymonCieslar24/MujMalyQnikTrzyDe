@@ -2,7 +2,6 @@ using UnityEngine;
 using UnityEngine.UI;
 using System.Collections.Generic;
 using TMPro;
-using UnityEngine.EventSystems;
 
 public class StartMenuUI : MonoBehaviour
 {
@@ -13,21 +12,18 @@ public class StartMenuUI : MonoBehaviour
     public TMP_Dropdown dropdownTMP;
     public Button startButton;
 
+    [Header("Powi¹zania")]
+    [Tooltip("Referencja do komponentu MicrophoneInput, który ma u¿ywaæ wybranego urz¹dzenia.")]
+    public MicrophoneInput micInput;
+
     [Header("Pauza gry na starcie")]
     public bool pauseOnStart = true;
 
-    private MicrophoneManager audioMgr;
+    private List<string> _options = new List<string>();
+    private const string PlayerPrefsKey = "mic_device";
 
     private void Awake()
     {
-        audioMgr = MicrophoneManager.Instance;
-        if (audioMgr == null)
-        {
-            // utwórz poprawnie – AudioSource zostanie dodany dziêki [RequireComponent]
-            var go = new GameObject("MicrophoneManager");
-            audioMgr = go.AddComponent<MicrophoneManager>();
-        }
-
         if (pauseOnStart) Time.timeScale = 0f;
         if (panel != null) panel.SetActive(true);
 
@@ -37,7 +33,6 @@ public class StartMenuUI : MonoBehaviour
 
     private void Start()
     {
-        // Auto-znajdŸ kontrolki jeœli nie przypiête
         if (startButton == null)
         {
             startButton = GetComponentInChildren<Button>(true);
@@ -50,6 +45,12 @@ public class StartMenuUI : MonoBehaviour
             if (dropdownTMP == null)
                 Debug.LogError("StartMenuUI: dropdownTMP nie jest przypiêty i nie znaleziono go w dzieciach.");
         }
+        if (micInput == null)
+        {
+            micInput = FindObjectOfType<MicrophoneInput>();
+            if (micInput == null)
+                Debug.LogWarning("StartMenuUI: Nie znaleziono MicrophoneInput w scenie.");
+        }
 
         PopulateDevices();
 
@@ -59,27 +60,30 @@ public class StartMenuUI : MonoBehaviour
             startButton.onClick.AddListener(OnStartClicked);
         }
 
-        audioMgr.StartPreview();
-
         Debug.Log("StartMenuUI: gotowe, czekam na klik 'Graj'.");
     }
 
     private void PopulateDevices()
     {
-        var devices = audioMgr.GetDevices();
-        var options = new List<string>(devices);
+        var devices = Microphone.devices;
+        _options = new List<string>(devices);
 
         if (dropdownTMP != null)
         {
             dropdownTMP.ClearOptions();
-            dropdownTMP.AddOptions(options);
+            dropdownTMP.AddOptions(_options);
             dropdownTMP.onValueChanged.RemoveAllListeners();
-            dropdownTMP.onValueChanged.AddListener(i => OnDeviceSelected(options, i));
+            dropdownTMP.onValueChanged.AddListener(OnDropdownChanged);
 
-            if (options.Count > 0)
+            if (_options.Count > 0)
             {
-                dropdownTMP.value = 0;
-                OnDeviceSelected(options, 0);
+                // Ustaw z PlayerPrefs (jeœli istnieje), w przeciwnym razie pierwsze urz¹dzenie
+                string saved = PlayerPrefs.GetString(PlayerPrefsKey, _options[0]);
+                int idx = Mathf.Max(0, _options.IndexOf(saved));
+                dropdownTMP.value = idx;
+                dropdownTMP.RefreshShownValue();
+
+                ApplySelectedDevice(idx);
             }
             else
             {
@@ -88,21 +92,35 @@ public class StartMenuUI : MonoBehaviour
         }
     }
 
-    private void OnDeviceSelected(List<string> options, int index)
+    private void OnDropdownChanged(int index)
     {
-        if (options == null || options.Count == 0) return;
-        string dev = options[Mathf.Clamp(index, 0, options.Count - 1)];
-        audioMgr.SetSelectedDevice(dev);
+        ApplySelectedDevice(index);
+    }
 
-        audioMgr.StopPreview();
-        audioMgr.StartPreview();
+    private void ApplySelectedDevice(int index)
+    {
+        if (_options == null || _options.Count == 0) return;
+        index = Mathf.Clamp(index, 0, _options.Count - 1);
+        string dev = _options[index];
+
+        // Zapisz wybór
+        PlayerPrefs.SetString(PlayerPrefsKey, dev);
+        PlayerPrefs.Save();
+
+        // Przeka¿ do MicrophoneInput
+        if (micInput != null)
+        {
+            micInput.SetDevice(dev);
+        }
+        else
+        {
+            Debug.LogWarning($"StartMenuUI: Brak referencji do MicrophoneInput. Wybrane urz¹dzenie: {dev}");
+        }
     }
 
     private void OnStartClicked()
     {
         Debug.Log("StartMenuUI: klikniêto 'Graj'.");
-
-        audioMgr.CommitSelection();
 
         if (panel) panel.SetActive(false);
         if (pauseOnStart) Time.timeScale = 1f;

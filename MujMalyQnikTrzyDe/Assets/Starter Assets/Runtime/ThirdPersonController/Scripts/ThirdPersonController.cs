@@ -86,6 +86,11 @@ namespace StarterAssets
         private float _nudgeRemaining = 0f;
         private Vector3 _nudgeDir = Vector3.zero;
 
+        [Header("Pitch Nudge Hop")]
+        public bool NudgeHop = true;
+        [Tooltip("Wysokość lekkiego podskoku w metrach")]
+        public float NudgeHopHeight = 0.2f; // ~lekki hop   
+
         [Header("Punish (kara za głośny dźwięk)")]
         public float PunishDuration = 5f;   // czas kary domyślnie
         private float _punishTime = -1f;    // <0 = brak kary
@@ -309,6 +314,19 @@ namespace StarterAssets
 
             _nudgeDir = camForward.normalized;
             _nudgeRemaining = distance;
+
+            // --- LEKKI PODSKOK NA NUDGE ---
+            if (NudgeHop && Grounded)
+            {
+                // klasyczna formuła skoku: v = sqrt(2 * g * h) (g ujemne)
+                float hopVelocity = Mathf.Sqrt(NudgeHopHeight * -2f * Gravity);
+
+                // jeśli już lecimy w górę, nie nadpisuj na mniejszą wartość
+                _verticalVelocity = Mathf.Max(_verticalVelocity, hopVelocity);
+
+                // (opcjonalnie) trigger animacji
+                if (_animator != null) _animator.SetTrigger(_animIDJump);
+            }
         }
 
         // --- PUBLICZNE: wyzwolenie wspięcia (rearing) ---
