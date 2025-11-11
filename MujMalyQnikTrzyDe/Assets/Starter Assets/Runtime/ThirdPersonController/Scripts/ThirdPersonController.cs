@@ -315,17 +315,21 @@ namespace StarterAssets
             _nudgeDir = camForward.normalized;
             _nudgeRemaining = distance;
 
-            // --- LEKKI PODSKOK NA NUDGE ---
+            //bool isRearing = _rearTime >= 0f;
+
+            //if (isRearing) return;
+
+            //// --- LEKKI PODSKOK NA NUDGE ---
             if (NudgeHop && Grounded)
             {
                 // klasyczna formuła skoku: v = sqrt(2 * g * h) (g ujemne)
                 float hopVelocity = Mathf.Sqrt(NudgeHopHeight * -2f * Gravity);
 
                 // jeśli już lecimy w górę, nie nadpisuj na mniejszą wartość
-                _verticalVelocity = Mathf.Max(_verticalVelocity, hopVelocity);
+                //_verticalVelocity = Mathf.Max(_verticalVelocity, hopVelocity);
 
                 // (opcjonalnie) trigger animacji
-                if (_animator != null) _animator.SetTrigger(_animIDJump);
+                //if (_animator != null) _animator.SetTrigger(_animIDJump);
             }
         }
 

@@ -9,6 +9,15 @@ public class TrackSpawnTrigger : MonoBehaviour
     [Tooltip("Czy przy ka¿dym wejœciu czyœcimy i generujemy nowy tor.")]
     public bool resetOnEveryEnter = true;
 
+    [Header("UI zawodów (opcjonalne, zostanie znalezione automatycznie)")]
+    [SerializeField] private CompetitionUI competitionUI;
+
+    private void Awake()
+    {
+        if (competitionUI == null)
+            competitionUI = FindObjectOfType<CompetitionUI>(true);
+    }
+
     private void Reset()
     {
         var col = GetComponent<Collider>();
@@ -17,8 +26,6 @@ public class TrackSpawnTrigger : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        Debug.Log("Trigger");
-
         if (!other.CompareTag(playerTag)) return;
 
         // 1) zatrzymaj ewentualny poprzedni bieg
@@ -53,6 +60,10 @@ public class TrackSpawnTrigger : MonoBehaviour
         {
             Debug.LogWarning("TrackSpawnTrigger: Brak TrackManager.Instance w scenie.");
         }
+
+        // 5) w³¹cz UI dopiero po wejœciu gracza w trigger
+        if (competitionUI != null)
+            competitionUI.Show();
 
         // Uwaga: nie wy³¹czamy triggera — ma dzia³aæ ponownie przy nastêpnym wejœciu
     }
