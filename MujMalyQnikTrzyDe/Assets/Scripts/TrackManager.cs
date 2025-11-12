@@ -19,6 +19,14 @@ public class TrackManager : MonoBehaviour
 
     private bool trackActivated = false;
 
+    public float finalRunTime = 0f;
+
+    [Header("UI zawodów (opcjonalne, zostanie znalezione automatycznie)")]
+    [SerializeField] private EndMenuUI competitionEndUI;
+
+    [Header("UI zawodów (opcjonalne, zostanie znalezione automatycznie)")]
+    [SerializeField] private CompetitionUI competitionUI;
+
     public float RunElapsed =>
         isRunning ? (Time.time - runStartTime) : lastRunTime;
 
@@ -30,6 +38,12 @@ public class TrackManager : MonoBehaviour
             return;
         }
         Instance = this;
+
+        if (competitionEndUI == null)
+            competitionEndUI = FindObjectOfType<EndMenuUI>(true);
+
+        if (competitionUI == null)
+            competitionUI = FindObjectOfType<CompetitionUI>(true);
 
         ArmTrackForTrigger();
     }
@@ -104,9 +118,24 @@ public class TrackManager : MonoBehaviour
         ClearedTotal++;
         if (success) ClearedSuccess++;
 
+        // Jeœli ostatnia przeszkoda zosta³a ukoñczona
         if (currentIndex >= obstacles.Count - 1)
         {
-            StopRun();
+            StopRun();  // Zatrzymanie biegu
+            finalRunTime = RunElapsed;  // Zapisz czas zakoñczenia
+
+            if (competitionUI != null)
+                competitionUI.Hide();
+
+            if (competitionEndUI != null)
+            {
+                Debug.Log("Showing competition end UI");
+                competitionEndUI.Show();  // Wyœwietlenie UI po zakoñczeniu
+            }
+            else
+            {
+                Debug.LogError("competitionEndUI is not assigned in TrackManager!");
+            }
         }
     }
 
@@ -156,6 +185,7 @@ public class TrackManager : MonoBehaviour
     public void StopRun()
     {
         if (!isRunning) return;
+
         isRunning = false;
         lastRunTime = Time.time - runStartTime;
     }
@@ -169,6 +199,7 @@ public class TrackManager : MonoBehaviour
         isRunning = false;
         runStartTime = 0f;
         lastRunTime = 0f;
+        finalRunTime = 0f;
 
         ArmTrackForTrigger();
     }

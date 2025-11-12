@@ -78,16 +78,19 @@ namespace StarterAssets
 
         [Header("Voice Nudge")]
         public float PitchNudgeDuration = 0.2f;
-        [Tooltip("Koszt jednorazowy skoku")]
+        [Tooltip("Długość pchnięcia w metrach (forward)")]
         public float NudgeDistance = 2f;
 
+        [Tooltip("Koszt jednorazowego Nudge w punktach staminy")]
         public float NudgeCost = 3f;
 
         private float _nudgeRemaining = 0f;
         private Vector3 _nudgeDir = Vector3.zero;
 
         [Header("Pitch Nudge Hop")]
+        [Tooltip("Czy Nudge dodaje lekki podskok (hop)")]
         public bool NudgeHop = true;
+
         [Tooltip("Wysokość lekkiego podskoku w metrach")]
         public float NudgeHopHeight = 0.2f; // ~lekki hop   
 
@@ -137,7 +140,7 @@ namespace StarterAssets
 #if ENABLE_INPUT_SYSTEM
                 return _playerInput.currentControlScheme == "KeyboardMouse";
 #else
-				return false;
+                return false;
 #endif
             }
         }
@@ -216,7 +219,7 @@ namespace StarterAssets
 #if ENABLE_INPUT_SYSTEM
             _playerInput = GetComponent<PlayerInput>();
 #else
-			Debug.LogError( "Starter Assets package is missing dependencies. Please use Tools/Starter Assets/Reinstall Dependencies to fix it");
+            Debug.LogError( "Starter Assets package is missing dependencies. Please use Tools/Starter Assets/Reinstall Dependencies to fix it");
 #endif
 
             AssignAnimationIDs();
@@ -315,21 +318,19 @@ namespace StarterAssets
             _nudgeDir = camForward.normalized;
             _nudgeRemaining = distance;
 
-            //bool isRearing = _rearTime >= 0f;
-
-            //if (isRearing) return;
-
-            //// --- LEKKI PODSKOK NA NUDGE ---
-            if (NudgeHop && Grounded)
+            // >>> DODANE: lekki podskok podczas Nudge
+            // warunki: włączone NudgeHop, brak kary/punish, nie w trakcie rearing,
+            // najlepiej gdy stoimy na ziemi (żeby nie wzmacniać już trwającego skoku)
+            if (NudgeHop && _punishTime < 0f && _rearTime < 0f && Grounded)
             {
-                // klasyczna formuła skoku: v = sqrt(2 * g * h) (g ujemne)
-                float hopVelocity = Mathf.Sqrt(NudgeHopHeight * -2f * Gravity);
+                // v = sqrt(h * -2 * g)  (Gravity jest ujemne)
+                float hopVelocity = Mathf.Sqrt(Mathf.Max(0.0001f, NudgeHopHeight) * -2f * Gravity);
 
-                // jeśli już lecimy w górę, nie nadpisuj na mniejszą wartość
-                //_verticalVelocity = Mathf.Max(_verticalVelocity, hopVelocity);
-
-                // (opcjonalnie) trigger animacji
-                //if (_animator != null) _animator.SetTrigger(_animIDJump);
+                // nie nadpisuj większej prędkości w górę (np. pełny skok)
+                if (_verticalVelocity < hopVelocity)
+                {
+                    _verticalVelocity = hopVelocity;
+                }
             }
         }
 
