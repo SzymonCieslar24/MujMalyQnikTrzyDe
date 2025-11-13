@@ -4344,6 +4344,10 @@ MonoBehaviour:
   - {fileID: 3238629614097544264, guid: 6fdfcb8efdab91640b025c175db802cc, type: 3}
   spawnPoints:
   - {fileID: 2107414596}
+  - {fileID: 866938273}
+  - {fileID: 1056129962}
+  - {fileID: 1440772668}
+  - {fileID: 2018952460}
 --- !u!4 &1210031499
 Transform:
   m_ObjectHideFlags: 0
