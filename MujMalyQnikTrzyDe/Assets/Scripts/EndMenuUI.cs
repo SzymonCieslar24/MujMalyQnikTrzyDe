@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using UnityEngine.SceneManagement;
 
 public class EndMenuUI : MonoBehaviour
 {
@@ -30,7 +31,7 @@ public class EndMenuUI : MonoBehaviour
 
         if (startButton != null)
         {
-            startButton.onClick.AddListener(HideAndRestart);
+            startButton.onClick.AddListener(BackToPadok);
         }
     }
 
@@ -54,6 +55,12 @@ public class EndMenuUI : MonoBehaviour
     {
         Hide();
         TrackManager.Instance.ResetRun();
+    }
+
+    private void BackToPadok()
+    {
+        // Przejœcie do sceny "Padok"
+        SceneManager.LoadScene("Padok");
     }
 
     private void Update()

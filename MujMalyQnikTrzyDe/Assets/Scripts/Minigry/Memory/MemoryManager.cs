@@ -37,6 +37,9 @@ public class MemoryManager : MonoBehaviour
 
     private void Start()
     {
+        Cursor.lockState = CursorLockMode.None;  // Myszka nie jest zablokowana
+        Cursor.visible = true;
+
         NewGame();
 
         if (BackButton != null)

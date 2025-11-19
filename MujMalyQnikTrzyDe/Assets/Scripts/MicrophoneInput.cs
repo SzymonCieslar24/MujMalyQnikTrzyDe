@@ -48,6 +48,9 @@ public class MicrophoneInput : MonoBehaviour
 
     private void Start()
     {
+
+        PlayerPrefs.DeleteKey(PlayerPrefsKey);
+
         if (Microphone.devices.Length == 0)
         {
             Debug.LogWarning("MicrophoneInput: Brak urz¹dzeñ mikrofonowych. Wy³¹czam komponent.");
@@ -87,6 +90,23 @@ public class MicrophoneInput : MonoBehaviour
             return;
         }
 
+        // Sprawdzamy, czy urz¹dzenie istnieje na liœcie dostêpnych mikrofonów
+        bool deviceFound = false;
+        foreach (var device in Microphone.devices)
+        {
+            if (device == deviceName)
+            {
+                deviceFound = true;
+                break;
+            }
+        }
+
+        if (!deviceFound)
+        {
+            Debug.LogError($"MicrophoneInput: Urz¹dzenie '{deviceName}' nie zosta³o znalezione. U¿ywam pierwszego dostêpnego mikrofonu.");
+            deviceName = Microphone.devices.Length > 0 ? Microphone.devices[0] : "";
+        }
+
         // Je¿eli to ju¿ to samo urz¹dzenie i dzia³a – nic nie rób
         if (!string.IsNullOrEmpty(MicrophoneDevice) && MicrophoneDevice == deviceName && audioSource.clip != null && Microphone.IsRecording(MicrophoneDevice))
             return;
@@ -100,6 +120,7 @@ public class MicrophoneInput : MonoBehaviour
         if (initRoutine != null) StopCoroutine(initRoutine);
         initRoutine = StartCoroutine(InitMicrophoneCoroutine(MicrophoneDevice));
     }
+
 
     private IEnumerator InitMicrophoneCoroutine(string device)
     {
